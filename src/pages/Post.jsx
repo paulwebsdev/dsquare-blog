@@ -26,6 +26,8 @@ function Post() {
           featured_image,
           published_at,
           category_id,
+          seo_title,
+          seo_description,
           categories (
             id,
             name,
@@ -52,6 +54,76 @@ function Post() {
 
     fetchPost();
   }, [slug]);
+
+  // Dynamic SEO
+  useEffect(() => {
+    if (!post) return;
+
+    const title =
+      post.seo_title ||
+      `${post.title} | Dsquare Web Blog`;
+
+    const description =
+      post.seo_description ||
+      post.excerpt ||
+      "Explore practical guides on web development, online business, making money, AI, and technology from Dsquare Web.";
+
+    const canonicalUrl =
+      `https://blog.dsquareweb.name.ng/blog/${post.slug}`;
+
+    document.title = title;
+
+    let descriptionTag = document.querySelector(
+      'meta[name="description"]'
+    );
+
+    if (!descriptionTag) {
+      descriptionTag = document.createElement("meta");
+      descriptionTag.setAttribute("name", "description");
+      document.head.appendChild(descriptionTag);
+    }
+
+    descriptionTag.setAttribute("content", description);
+
+    let canonicalTag = document.querySelector(
+      'link[rel="canonical"]'
+    );
+
+    if (!canonicalTag) {
+      canonicalTag = document.createElement("link");
+      canonicalTag.setAttribute("rel", "canonical");
+      document.head.appendChild(canonicalTag);
+    }
+
+    canonicalTag.setAttribute("href", canonicalUrl);
+
+    // Open Graph
+    const setMetaProperty = (property, content) => {
+      let tag = document.querySelector(
+        `meta[property="${property}"]`
+      );
+
+      if (!tag) {
+        tag = document.createElement("meta");
+        tag.setAttribute("property", property);
+        document.head.appendChild(tag);
+      }
+
+      tag.setAttribute("content", content);
+    };
+
+    setMetaProperty("og:type", "article");
+    setMetaProperty("og:title", title);
+    setMetaProperty("og:description", description);
+    setMetaProperty("og:url", canonicalUrl);
+
+    if (post.featured_image) {
+      setMetaProperty(
+        "og:image",
+        post.featured_image
+      );
+    }
+  }, [post]);
 
   if (loading) {
     return (
