@@ -10,10 +10,12 @@ function Post() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Fetch article
   useEffect(() => {
     async function fetchPost() {
       setLoading(true);
       setError("");
+      setPost(null);
 
       const { data, error } = await supabase
         .from("posts")
@@ -25,6 +27,7 @@ function Post() {
           excerpt,
           featured_image,
           published_at,
+          updated_at,
           category_id,
           seo_title,
           seo_description,
@@ -41,21 +44,24 @@ function Post() {
       if (error) {
         console.error("Post error:", error);
         setError("Unable to load this article.");
-        setPost(null);
-      } else if (!data) {
-        setError("Article not found.");
-        setPost(null);
-      } else {
-        setPost(data);
+        setLoading(false);
+        return;
       }
 
+      if (!data) {
+        setError("Article not found.");
+        setLoading(false);
+        return;
+      }
+
+      setPost(data);
       setLoading(false);
     }
 
     fetchPost();
   }, [slug]);
 
-  // Dynamic SEO
+  // SEO metadata
   useEffect(() => {
     if (!post) return;
 
@@ -71,67 +77,146 @@ function Post() {
     const canonicalUrl =
       `https://blog.dsquareweb.name.ng/blog/${post.slug}`;
 
+    const imageUrl = post.featured_image || "";
+
+    // Page title
     document.title = title;
 
-    let descriptionTag = document.querySelector(
-      'meta[name="description"]'
-    );
+    // Helper: meta name
+    function setMetaName(name, content) {
+      let meta = document.querySelector(
+        `meta[name="${name}"]`
+      );
 
-    if (!descriptionTag) {
-      descriptionTag = document.createElement("meta");
-      descriptionTag.setAttribute("name", "description");
-      document.head.appendChild(descriptionTag);
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.setAttribute("name", name);
+        document.head.appendChild(meta);
+      }
+
+      meta.setAttribute("content", content);
     }
 
-    descriptionTag.setAttribute("content", description);
-
-    let canonicalTag = document.querySelector(
-      'link[rel="canonical"]'
-    );
-
-    if (!canonicalTag) {
-      canonicalTag = document.createElement("link");
-      canonicalTag.setAttribute("rel", "canonical");
-      document.head.appendChild(canonicalTag);
-    }
-
-    canonicalTag.setAttribute("href", canonicalUrl);
-
-    // Open Graph
-    const setMetaProperty = (property, content) => {
-      let tag = document.querySelector(
+    // Helper: meta property
+    function setMetaProperty(property, content) {
+      let meta = document.querySelector(
         `meta[property="${property}"]`
       );
 
-      if (!tag) {
-        tag = document.createElement("meta");
-        tag.setAttribute("property", property);
-        document.head.appendChild(tag);
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.setAttribute("property", property);
+        document.head.appendChild(meta);
       }
 
-      tag.setAttribute("content", content);
-    };
+      meta.setAttribute("content", content);
+    }
 
+    // Meta description
+    setMetaName("description", description);
+
+    // Canonical URL
+    let canonical = document.querySelector(
+      'link[rel="canonical"]'
+    );
+
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+
+    canonical.setAttribute("href", canonicalUrl);
+
+    // Open Graph
     setMetaProperty("og:type", "article");
     setMetaProperty("og:title", title);
     setMetaProperty("og:description", description);
     setMetaProperty("og:url", canonicalUrl);
+    setMetaProperty("og:site_name", "Dsquare Web Blog");
 
-    if (post.featured_image) {
-      setMetaProperty(
-        "og:image",
-        post.featured_image
-      );
+    // Twitter / X
+    setMetaName("twitter:card", "summary_large_image");
+    setMetaName("twitter:title", title);
+    setMetaName("twitter:description", description);
+
+    // Featured image for social sharing
+    if (imageUrl) {
+      setMetaProperty("og:image", imageUrl);
+      setMetaName("twitter:image", imageUrl);
     }
+
+    // Article structured data
+    const oldSchema = document.getElementById(
+      "article-schema"
+    );
+
+    if (oldSchema) {
+      oldSchema.remove();
+    }
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: post.title,
+      description: description,
+      url: canonicalUrl,
+
+      author: {
+        "@type": "Organization",
+        name: "Dsquare Web",
+        url: "https://blog.dsquareweb.name.ng",
+      },
+
+      publisher: {
+        "@type": "Organization",
+        name: "Dsquare Web",
+        url: "https://blog.dsquareweb.name.ng",
+      },
+    };
+
+    if (post.published_at) {
+      schema.datePublished = post.published_at;
+    }
+
+    if (post.updated_at) {
+      schema.dateModified = post.updated_at;
+    }
+
+    if (imageUrl) {
+      schema.image = imageUrl;
+    }
+
+    const schemaScript = document.createElement("script");
+
+    schemaScript.id = "article-schema";
+    schemaScript.type = "application/ld+json";
+    schemaScript.textContent = JSON.stringify(schema);
+
+    document.head.appendChild(schemaScript);
+
+    // Cleanup when leaving the article
+    return () => {
+      const currentSchema =
+        document.getElementById("article-schema");
+
+      if (currentSchema) {
+        currentSchema.remove();
+      }
+    };
   }, [post]);
 
+  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-white px-6 py-20">
         <div className="mx-auto max-w-4xl">
           <div className="h-10 w-3/4 animate-pulse rounded bg-gray-100" />
+
           <div className="mt-6 h-5 w-1/3 animate-pulse rounded bg-gray-100" />
+
           <div className="mt-10 h-80 animate-pulse rounded-2xl bg-gray-100" />
+
           <div className="mt-10 space-y-4">
             <div className="h-5 animate-pulse rounded bg-gray-100" />
             <div className="h-5 animate-pulse rounded bg-gray-100" />
@@ -142,6 +227,7 @@ function Post() {
     );
   }
 
+  // Error / not found
   if (error || !post) {
     return (
       <div className="min-h-screen bg-white px-6 py-20">
@@ -155,8 +241,8 @@ function Post() {
           </h1>
 
           <p className="mt-4 text-gray-600">
-            The article you're looking for may have been removed or
-            the link may be incorrect.
+            The article you're looking for may have been removed
+            or the link may be incorrect.
           </p>
 
           <Link
@@ -241,7 +327,9 @@ function Post() {
             prose-img:shadow-sm
             prose-blockquote:border-blue-600
             prose-blockquote:text-gray-600"
-          dangerouslySetInnerHTML={{ __html: post.content }}
+          dangerouslySetInnerHTML={{
+            __html: post.content,
+          }}
         />
 
         {/* RELATED ARTICLES */}
