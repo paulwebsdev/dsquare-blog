@@ -9,6 +9,7 @@ function Post() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
 
   // Fetch article
   useEffect(() => {
@@ -206,6 +207,80 @@ function Post() {
     };
   }, [post]);
 
+  async function handleNativeShare() {
+    if (!post) return;
+
+    const shareUrl =
+      `${window.location.origin}/blog/${post.slug}`;
+
+    if (!navigator.share) {
+      await handleCopyLink();
+      return;
+    }
+
+    try {
+      await navigator.share({
+        title: post.title,
+        text:
+          post.excerpt ||
+          "Read this article on Dsquare Web Blog.",
+        url: shareUrl,
+      });
+    } catch (error) {
+      // User cancelled the native share menu.
+      if (error?.name !== "AbortError") {
+        console.error("Share error:", error);
+      }
+    }
+  }
+
+  async function handleCopyLink() {
+    if (!post) return;
+
+    const shareUrl =
+      `${window.location.origin}/blog/${post.slug}`;
+
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+
+      setCopied(true);
+
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Copy link error:", error);
+      alert("Unable to copy the link.");
+    }
+  }
+
+  function getShareUrl(platform) {
+    if (!post) return "#";
+
+    const shareUrl = encodeURIComponent(
+      `${window.location.origin}/blog/${post.slug}`
+    );
+
+    const shareTitle = encodeURIComponent(post.title);
+
+    switch (platform) {
+      case "whatsapp":
+        return `https://wa.me/?text=${shareTitle}%20${shareUrl}`;
+
+      case "facebook":
+        return `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
+
+      case "x":
+        return `https://twitter.com/intent/tweet?text=${shareTitle}&url=${shareUrl}`;
+
+      case "telegram":
+        return `https://t.me/share/url?url=${shareUrl}&text=${shareTitle}`;
+
+      default:
+        return "#";
+    }
+  }
+
   // Loading state
   if (loading) {
     return (
@@ -263,6 +338,9 @@ function Post() {
         day: "numeric",
       })
     : "";
+
+  const shareUrl =
+    `${window.location.origin}/blog/${post.slug}`;
 
   return (
     <article className="min-h-screen bg-white text-gray-900">
@@ -331,6 +409,80 @@ function Post() {
             __html: post.content,
           }}
         />
+
+        {/* SHARE ARTICLE */}
+        <div className="mt-14 border-t border-gray-200 pt-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-950">
+                Share this article
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Found this useful? Share it with someone who might
+                find it helpful.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={getShareUrl("whatsapp")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700"
+              >
+                WhatsApp
+              </a>
+
+              <a
+                href={getShareUrl("facebook")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                Facebook
+              </a>
+
+              <a
+                href={getShareUrl("x")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl bg-black px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
+              >
+                X
+              </a>
+
+              <a
+                href={getShareUrl("telegram")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-sky-600"
+              >
+                Telegram
+              </a>
+
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-50"
+              >
+                {copied ? "Copied ✓" : "Copy Link"}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleNativeShare}
+                className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 transition hover:bg-gray-50"
+              >
+                Share
+              </button>
+            </div>
+          </div>
+
+          <p className="mt-5 break-all text-xs text-gray-400">
+            {shareUrl}
+          </p>
+        </div>
 
         {/* RELATED ARTICLES */}
         <RelatedPosts
