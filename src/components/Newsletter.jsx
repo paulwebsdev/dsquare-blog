@@ -1,23 +1,42 @@
 import { useState } from "react";
+import { supabase } from "../services/supabase";
 
 function Newsletter() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
 
-    const trimmedEmail = email.trim();
+    const trimmedEmail = email.trim().toLowerCase();
 
     if (!trimmedEmail) {
       setMessage("Please enter your email address.");
       return;
     }
 
-    setMessage(
-      "Thanks for subscribing! Newsletter subscriptions will be available soon."
-    );
+    setLoading(true);
+    setMessage("");
 
+    const { error } = await supabase
+      .from("newsletter_subscribers")
+      .insert([{ email: trimmedEmail }]);
+
+    setLoading(false);
+
+    if (error) {
+      if (error.code === "23505") {
+        setMessage("You're already subscribed. Thank you!");
+      } else {
+        console.error("Newsletter subscription error:", error);
+        setMessage("Something went wrong. Please try again.");
+      }
+
+      return;
+    }
+
+    setMessage("Thanks for subscribing! 🎉");
     setEmail("");
   }
 
@@ -51,14 +70,16 @@ function Newsletter() {
             }}
             placeholder="Enter your email address"
             aria-label="Email address"
-            className="min-w-0 flex-1 rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-900"
+            disabled={loading}
+            className="min-w-0 flex-1 rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-white outline-none placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-900 disabled:opacity-60"
           />
 
           <button
             type="submit"
-            className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
+            disabled={loading}
+            className="rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Subscribe
+            {loading ? "Subscribing..." : "Subscribe"}
           </button>
         </form>
 
@@ -77,4 +98,3 @@ function Newsletter() {
 }
 
 export default Newsletter;
-

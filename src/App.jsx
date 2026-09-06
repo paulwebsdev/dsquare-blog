@@ -11,6 +11,7 @@ import Contact from "./pages/Contact";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Disclaimer from "./pages/Disclaimer";
+import Unsubscribe from "./pages/Unsubscribe";
 
 // Layout
 import PublicLayout from "./layouts/PublicLayout";
@@ -23,12 +24,12 @@ import Editor from "./admin/Editor";
 import Categories from "./admin/Categories";
 import Settings from "./admin/Settings";
 import AdminProtectedRoute from "./admin/AdminProtectedRoute";
+import Newsletter from "./admin/Newsletter";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* PUBLIC WEBSITE */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
@@ -42,12 +43,18 @@ function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
+
+          {/* Newsletter unsubscribe */}
+          <Route
+            path="/unsubscribe/:token"
+            element={<Unsubscribe />}
+          />
         </Route>
 
         {/* ADMIN LOGIN */}
         <Route path="/admin/login" element={<Login />} />
 
-        {/* ADMIN */}
+        {/* ADMIN DASHBOARD */}
         <Route
           path="/admin"
           element={
@@ -57,6 +64,7 @@ function App() {
           }
         />
 
+        {/* ADMIN POSTS */}
         <Route
           path="/admin/posts"
           element={
@@ -66,6 +74,7 @@ function App() {
           }
         />
 
+        {/* ADMIN EDITOR */}
         <Route
           path="/admin/editor"
           element={
@@ -75,6 +84,7 @@ function App() {
           }
         />
 
+        {/* ADMIN CATEGORIES */}
         <Route
           path="/admin/categories"
           element={
@@ -84,6 +94,7 @@ function App() {
           }
         />
 
+        {/* ADMIN SETTINGS */}
         <Route
           path="/admin/settings"
           element={
@@ -93,6 +104,15 @@ function App() {
           }
         />
 
+        {/* ADMIN NEWSLETTER */}
+        <Route
+          path="/admin/newsletter"
+          element={
+            <AdminProtectedRoute>
+              <Newsletter />
+            </AdminProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

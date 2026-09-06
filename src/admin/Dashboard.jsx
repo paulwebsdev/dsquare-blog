@@ -7,6 +7,7 @@ function Dashboard() {
 
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [subscriberCount, setSubscriberCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,6 +17,7 @@ function Dashboard() {
       const [
         { data: postsData, error: postsError },
         { data: categoriesData, error: categoriesError },
+        { count: subscribersCount, error: subscribersError },
       ] = await Promise.all([
         supabase
           .from("posts")
@@ -25,6 +27,10 @@ function Dashboard() {
         supabase
           .from("categories")
           .select("id, name"),
+
+        supabase
+          .from("newsletter_subscribers")
+          .select("*", { count: "exact", head: true }),
       ]);
 
       if (postsError) {
@@ -35,8 +41,14 @@ function Dashboard() {
         console.error("Categories error:", categoriesError);
       }
 
+      if (subscribersError) {
+        console.error("Subscribers error:", subscribersError);
+      }
+
       setPosts(postsData || []);
       setCategories(categoriesData || []);
+      setSubscriberCount(subscribersCount || 0);
+
       setLoading(false);
     }
 
@@ -120,7 +132,7 @@ function Dashboard() {
         </div>
 
         {/* STATS */}
-        <section className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
 
           {/* TOTAL */}
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -174,6 +186,26 @@ function Dashboard() {
 
           </div>
 
+          {/* NEWSLETTER */}
+          <Link
+            to="/admin/newsletter"
+            className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+          >
+
+            <p className="text-sm font-medium text-gray-500">
+              Newsletter Subscribers
+            </p>
+
+            <p className="mt-3 text-3xl font-bold text-purple-600">
+              {loading ? "—" : subscriberCount}
+            </p>
+
+            <p className="mt-2 text-xs font-semibold text-purple-600">
+              View subscribers →
+            </p>
+
+          </Link>
+
         </section>
 
         {/* QUICK ACTIONS */}
@@ -183,8 +215,9 @@ function Dashboard() {
             Quick Actions
           </h2>
 
-          <div className="mt-5 grid gap-5 md:grid-cols-3">
+          <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
 
+            {/* CREATE ARTICLE */}
             <Link
               to="/admin/editor"
               className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
@@ -202,6 +235,7 @@ function Dashboard() {
               </span>
             </Link>
 
+            {/* MANAGE ARTICLES */}
             <Link
               to="/admin/posts"
               className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
@@ -219,6 +253,7 @@ function Dashboard() {
               </span>
             </Link>
 
+            {/* MANAGE CATEGORIES */}
             <Link
               to="/admin/categories"
               className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
@@ -233,6 +268,24 @@ function Dashboard() {
 
               <span className="mt-4 inline-block font-semibold text-blue-600">
                 Manage categories →
+              </span>
+            </Link>
+
+            {/* NEWSLETTER */}
+            <Link
+              to="/admin/newsletter"
+              className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+            >
+              <h3 className="text-lg font-bold">
+                Newsletter Subscribers
+              </h3>
+
+              <p className="mt-2 text-sm text-gray-600">
+                View and manage people subscribed to your newsletter.
+              </p>
+
+              <span className="mt-4 inline-block font-semibold text-blue-600">
+                View subscribers →
               </span>
             </Link>
 
