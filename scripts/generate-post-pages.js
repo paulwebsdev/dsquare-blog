@@ -16,7 +16,9 @@ const distDir = path.join(root, "dist");
 const baseHtmlPath = path.join(distDir, "index.html");
 
 if (!fs.existsSync(baseHtmlPath)) {
-  throw new Error("dist/index.html was not found. Run vite build first.");
+  throw new Error(
+    "dist/index.html was not found. Run vite build first."
+  );
 }
 
 const baseHtml = fs.readFileSync(baseHtmlPath, "utf8");
@@ -61,11 +63,15 @@ for (const post of posts || []) {
     post.excerpt ||
     "Read practical articles from Dsquare Web Blog.";
 
-  const image = post.featured_image || "";
+  // Use a local image for this article's social preview.
+  const image =
+    post.slug === "why-every-business-needs-a-website"
+      ? `${BASE_URL}/images/why-every-business-needs-a-website.jpg`
+      : post.featured_image || "";
 
   let html = baseHtml;
 
-  // Remove homepage SEO metadata before adding article metadata.
+  // Remove homepage metadata.
   html = removeTag(
     html,
     /<title>[\s\S]*?<\/title>/gi
@@ -123,6 +129,21 @@ for (const post of posts || []) {
 
   html = removeTag(
     html,
+    /<meta\s+property=["']og:image:type["'][^>]*>/gi
+  );
+
+  html = removeTag(
+    html,
+    /<meta\s+property=["']og:image:width["'][^>]*>/gi
+  );
+
+  html = removeTag(
+    html,
+    /<meta\s+property=["']og:image:height["'][^>]*>/gi
+  );
+
+  html = removeTag(
+    html,
     /<meta\s+name=["']twitter:card["'][^>]*>/gi
   );
 
@@ -141,7 +162,6 @@ for (const post of posts || []) {
     /<meta\s+name=["']twitter:image["'][^>]*>/gi
   );
 
-  // Add article-specific metadata.
   const metadata = `
     <title>${escapeHtml(title)}</title>
 
@@ -182,9 +202,21 @@ for (const post of posts || []) {
       property="og:image"
       content="${escapeHtml(image)}"
     />
-    <meta property="og:image:type" content="image/jpeg" />
-    <meta property="og:image:width" content="755" />
-    <meta property="og:image:height" content="755" />
+
+    <meta
+      property="og:image:type"
+      content="image/jpeg"
+    />
+
+    <meta
+      property="og:image:width"
+      content="755"
+    />
+
+    <meta
+      property="og:image:height"
+      content="755"
+    />
     `
         : ""
     }
@@ -252,6 +284,3 @@ for (const post of posts || []) {
 console.log(
   `Generated ${posts?.length || 0} article page(s).`
 );
-
-
-
