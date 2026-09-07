@@ -182,6 +182,9 @@ for (const post of posts || []) {
       property="og:image"
       content="${escapeHtml(image)}"
     />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="755" />
+    <meta property="og:image:height" content="755" />
     `
         : ""
     }
@@ -249,3 +252,6 @@ for (const post of posts || []) {
 console.log(
   `Generated ${posts?.length || 0} article page(s).`
 );
+
+
+
