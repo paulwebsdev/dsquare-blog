@@ -484,6 +484,43 @@ function Post() {
           </p>
         </div>
 
+        {/* WEBSITE CTA */}
+<div className="mt-14 rounded-3xl bg-gray-950 px-6 py-10 text-center text-white md:px-10">
+  <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">
+    Need a Website?
+  </p>
+
+  <h2 className="mt-3 text-2xl font-bold md:text-3xl">
+    Ready to take your business online?
+  </h2>
+
+  <p className="mx-auto mt-4 max-w-2xl leading-7 text-gray-400">
+    Want a professional website for your business?
+    Dsquare Web can help you create a modern,
+    mobile-friendly website built around your business.
+  </p>
+
+  <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+    <a
+      href={`https://wa.me/2348055178547?text=${encodeURIComponent(
+        `Hi Dsquare Web 👋, I read your article "${post.title}" and I'm interested in creating a website for my business. I'd like to know more about your services.`
+      )}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
+    >
+      💬 Message Us
+    </a>
+
+    <Link
+      to="/contact"
+      className="rounded-xl border border-gray-700 px-6 py-3 font-semibold text-white transition hover:bg-gray-900"
+    >
+      💻 Create My Website
+    </Link>
+  </div>
+</div>
+
         {/* SUBSCRIBE CTA */}
 <div className="mt-12 rounded-3xl border border-blue-100 bg-blue-50 px-6 py-8 text-center">
   <div className="mx-auto max-w-2xl">
