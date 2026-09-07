@@ -484,6 +484,37 @@ function Post() {
           </p>
         </div>
 
+        {/* SUBSCRIBE CTA */}
+<div className="mt-12 rounded-3xl border border-blue-100 bg-blue-50 px-6 py-8 text-center">
+  <div className="mx-auto max-w-2xl">
+    <p className="text-sm font-bold uppercase tracking-wider text-blue-600">
+      Stay Updated
+    </p>
+
+    <h2 className="mt-2 text-2xl font-bold text-gray-950">
+      Enjoyed this article?
+    </h2>
+
+    <p className="mt-3 leading-7 text-gray-600">
+      Subscribe to Dsquare Web Blog and get new articles, useful
+      tips, AI updates, business ideas, and technology content
+      delivered to your inbox.
+    </p>
+
+    <button
+      type="button"
+      onClick={() => {
+        window.dispatchEvent(
+          new CustomEvent("open-newsletter-popup")
+        );
+      }}
+      className="mt-6 inline-flex animate-pulse items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:scale-105 hover:bg-blue-700"
+    >
+      🔔 Subscribe
+    </button>
+  </div>
+</div>
+
         {/* RELATED ARTICLES */}
         <RelatedPosts
           categoryId={post.category_id}
