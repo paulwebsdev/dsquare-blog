@@ -57,6 +57,82 @@ function Post() {
 
       setPost(data);
       setLoading(false);
+
+      // Record article view and traffic source
+      try {
+        const viewKey = `post-viewed-${data.id}`;
+        const alreadyViewed = sessionStorage.getItem(viewKey);
+
+        // Count once per browser tab session for each article.
+        if (!alreadyViewed) {
+          const referrer = document.referrer || "";
+          let source = "direct";
+
+          if (referrer) {
+            try {
+              const referrerHost = new URL(referrer).hostname
+                .toLowerCase()
+                .replace(/^www\./, "");
+
+              if (referrerHost.includes("google.")) {
+                source = "google";
+              } else if (
+                referrerHost.includes("facebook.com") ||
+                referrerHost.includes("fb.com")
+              ) {
+                source = "facebook";
+              } else if (
+                referrerHost.includes("instagram.com") ||
+                referrerHost.includes("cdninstagram.com")
+              ) {
+                source = "instagram";
+              } else if (
+                referrerHost.includes("whatsapp.com") ||
+                referrerHost.includes("whatsapp.net")
+              ) {
+                source = "whatsapp";
+              } else if (
+                referrerHost.includes("telegram.org") ||
+                referrerHost.includes("t.me")
+              ) {
+                source = "telegram";
+              } else if (
+                referrerHost.includes("twitter.com") ||
+                referrerHost.includes("x.com")
+              ) {
+                source = "x";
+              } else {
+                source = "other";
+              }
+            } catch {
+              source = "other";
+            }
+          }
+
+          const { error: viewError } = await supabase
+            .from("post_views")
+            .insert([
+              {
+                post_id: data.id,
+                source,
+              },
+            ]);
+
+          if (viewError) {
+            console.error(
+              "View tracking error:",
+              viewError
+            );
+          } else {
+            sessionStorage.setItem(viewKey, "true");
+          }
+        }
+      } catch (viewTrackingError) {
+        console.error(
+          "View tracking error:",
+          viewTrackingError
+        );
+      }
     }
 
     fetchPost();
@@ -73,7 +149,7 @@ function Post() {
     const description =
       post.seo_description ||
       post.excerpt ||
-      "Explore practical guides on web development, online business, making money, AI, and technology from Dsquare Web.";
+      "Explore practical guides on web development, making money, AI, technology, and online business from Dsquare Web Blog.";
 
     const canonicalUrl =
       `https://blog.dsquareweb.name.ng/blog/${post.slug}`;
@@ -137,13 +213,23 @@ function Post() {
     setMetaProperty("og:site_name", "Dsquare Web Blog");
 
     // Twitter / X
-    setMetaName("twitter:card", "summary_large_image");
+    setMetaName(
+      "twitter:card",
+      "summary_large_image"
+    );
     setMetaName("twitter:title", title);
-    setMetaName("twitter:description", description);
+    setMetaName(
+      "twitter:description",
+      description
+    );
 
     // Featured image for social sharing
     if (imageUrl) {
       setMetaProperty("og:image", imageUrl);
+      setMetaProperty("og:image:type", "image/jpeg");
+      setMetaProperty("og:image:width", "755");
+      setMetaProperty("og:image:height", "755");
+
       setMetaName("twitter:image", imageUrl);
     }
 
@@ -160,7 +246,7 @@ function Post() {
       "@context": "https://schema.org",
       "@type": "BlogPosting",
       headline: post.title,
-      description: description,
+      description,
       url: canonicalUrl,
 
       author: {
@@ -188,11 +274,13 @@ function Post() {
       schema.image = imageUrl;
     }
 
-    const schemaScript = document.createElement("script");
+    const schemaScript =
+      document.createElement("script");
 
     schemaScript.id = "article-schema";
     schemaScript.type = "application/ld+json";
-    schemaScript.textContent = JSON.stringify(schema);
+    schemaScript.textContent =
+      JSON.stringify(schema);
 
     document.head.appendChild(schemaScript);
 
@@ -229,7 +317,10 @@ function Post() {
     } catch (error) {
       // User cancelled the native share menu.
       if (error?.name !== "AbortError") {
-        console.error("Share error:", error);
+        console.error(
+          "Share error:",
+          error
+        );
       }
     }
   }
@@ -241,7 +332,9 @@ function Post() {
       `${window.location.origin}/blog/${post.slug}`;
 
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(
+        shareUrl
+      );
 
       setCopied(true);
 
@@ -249,7 +342,11 @@ function Post() {
         setCopied(false);
       }, 2000);
     } catch (error) {
-      console.error("Copy link error:", error);
+      console.error(
+        "Copy link error:",
+        error
+      );
+
       alert("Unable to copy the link.");
     }
   }
@@ -261,7 +358,9 @@ function Post() {
       `${window.location.origin}/blog/${post.slug}`
     );
 
-    const shareTitle = encodeURIComponent(post.title);
+    const shareTitle = encodeURIComponent(
+      post.title
+    );
 
     switch (platform) {
       case "whatsapp":
@@ -316,8 +415,8 @@ function Post() {
           </h1>
 
           <p className="mt-4 text-gray-600">
-            The article you're looking for may have been removed
-            or the link may be incorrect.
+            The article you're looking for may have been
+            removed or the link may be incorrect.
           </p>
 
           <Link
@@ -332,7 +431,9 @@ function Post() {
   }
 
   const formattedDate = post.published_at
-    ? new Date(post.published_at).toLocaleDateString("en-NG", {
+    ? new Date(
+        post.published_at
+      ).toLocaleDateString("en-NG", {
         year: "numeric",
         month: "long",
         day: "numeric",
@@ -341,6 +442,13 @@ function Post() {
 
   const shareUrl =
     `${window.location.origin}/blog/${post.slug}`;
+
+  const whatsappMessage = encodeURIComponent(
+    `Hi Dsquare Web 👋, I read your article "${post.title}" and I'm interested in creating a website for my business. I'd like to know more about your services.`
+  );
+
+  const whatsappUrl =
+    `https://wa.me/2348055178547?text=${whatsappMessage}`;
 
   return (
     <article className="min-h-screen bg-white text-gray-900">
@@ -393,7 +501,8 @@ function Post() {
       {/* ARTICLE CONTENT */}
       <div className="mx-auto max-w-3xl px-6 py-12">
         <div
-          className="prose prose-lg max-w-none
+          className="
+            prose prose-lg max-w-none
             prose-headings:font-bold
             prose-headings:text-gray-950
             prose-p:leading-8
@@ -404,7 +513,8 @@ function Post() {
             prose-img:rounded-2xl
             prose-img:shadow-sm
             prose-blockquote:border-blue-600
-            prose-blockquote:text-gray-600"
+            prose-blockquote:text-gray-600
+          "
           dangerouslySetInnerHTML={{
             __html: post.content,
           }}
@@ -485,72 +595,70 @@ function Post() {
         </div>
 
         {/* WEBSITE CTA */}
-<div className="mt-14 rounded-3xl bg-gray-950 px-6 py-10 text-center text-white md:px-10">
-  <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">
-    Need a Website?
-  </p>
+        <div className="mt-14 rounded-3xl bg-gray-950 px-6 py-10 text-center text-white md:px-10">
+          <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">
+            Need a Website?
+          </p>
 
-  <h2 className="mt-3 text-2xl font-bold md:text-3xl">
-    Ready to take your business online?
-  </h2>
+          <h2 className="mt-3 text-2xl font-bold md:text-3xl">
+            Ready to take your business online?
+          </h2>
 
-  <p className="mx-auto mt-4 max-w-2xl leading-7 text-gray-400">
-    Want a professional website for your business?
-    Dsquare Web can help you create a modern,
-    mobile-friendly website built around your business.
-  </p>
+          <p className="mx-auto mt-4 max-w-2xl leading-7 text-gray-400">
+            Want a professional website for your business?
+            Dsquare Web can help you create a modern,
+            mobile-friendly website built around your business.
+          </p>
 
-  <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-    <a
-      href={`https://wa.me/2348055178547?text=${encodeURIComponent(
-        `Hi Dsquare Web 👋, I read your article "${post.title}" and I'm interested in creating a website for my business. I'd like to know more about your services.`
-      )}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
-    >
-      💬 Message Us
-    </a>
+          <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl bg-green-600 px-6 py-3 font-semibold text-white transition hover:bg-green-700"
+            >
+              💬 Message Us
+            </a>
 
-    <Link
-      to="/contact"
-      className="rounded-xl border border-gray-700 px-6 py-3 font-semibold text-white transition hover:bg-gray-900"
-    >
-      💻 Create My Website
-    </Link>
-  </div>
-</div>
+            <Link
+              to="/contact"
+              className="rounded-xl border border-gray-700 px-6 py-3 font-semibold text-white transition hover:bg-gray-900"
+            >
+              💻 Create My Website
+            </Link>
+          </div>
+        </div>
 
         {/* SUBSCRIBE CTA */}
-<div className="mt-12 rounded-3xl border border-blue-100 bg-blue-50 px-6 py-8 text-center">
-  <div className="mx-auto max-w-2xl">
-    <p className="text-sm font-bold uppercase tracking-wider text-blue-600">
-      Stay Updated
-    </p>
+        <div className="mt-12 rounded-3xl border border-blue-100 bg-blue-50 px-6 py-8 text-center">
+          <div className="mx-auto max-w-2xl">
+            <p className="text-sm font-bold uppercase tracking-wider text-blue-600">
+              Stay Updated
+            </p>
 
-    <h2 className="mt-2 text-2xl font-bold text-gray-950">
-      Enjoyed this article?
-    </h2>
+            <h2 className="mt-2 text-2xl font-bold text-gray-950">
+              Enjoyed this article?
+            </h2>
 
-    <p className="mt-3 leading-7 text-gray-600">
-      Subscribe to Dsquare Web Blog and get new articles, useful
-      tips, AI updates, business ideas, and technology content
-      delivered to your inbox.
-    </p>
+            <p className="mt-3 leading-7 text-gray-600">
+              Subscribe to Dsquare Web Blog and get new articles,
+              useful tips, AI updates, business ideas, and technology
+              content delivered to your inbox.
+            </p>
 
-    <button
-      type="button"
-      onClick={() => {
-        window.dispatchEvent(
-          new CustomEvent("open-newsletter-popup")
-        );
-      }}
-      className="mt-6 inline-flex animate-pulse items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:scale-105 hover:bg-blue-700"
-    >
-      🔔 Subscribe
-    </button>
-  </div>
-</div>
+            <button
+              type="button"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent("open-newsletter-popup")
+                );
+              }}
+              className="mt-6 inline-flex animate-pulse items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:scale-105 hover:bg-blue-700"
+            >
+              🔔 Subscribe
+            </button>
+          </div>
+        </div>
 
         {/* RELATED ARTICLES */}
         <RelatedPosts
