@@ -63,7 +63,8 @@ for (const post of posts || []) {
     post.excerpt ||
     "Read practical articles from Dsquare Web Blog.";
 
-  // Use a local image for this article's social preview.
+  // Use the featured image from the database.
+  // Keep the old special-case image for this specific article.
   const image =
     post.slug === "why-every-business-needs-a-website"
       ? `${BASE_URL}/images/why-every-business-needs-a-website.jpg`
@@ -201,21 +202,6 @@ for (const post of posts || []) {
     <meta
       property="og:image"
       content="${escapeHtml(image)}"
-    />
-
-    <meta
-      property="og:image:type"
-      content="image/jpeg"
-    />
-
-    <meta
-      property="og:image:width"
-      content="755"
-    />
-
-    <meta
-      property="og:image:height"
-      content="755"
     />
     `
         : ""
